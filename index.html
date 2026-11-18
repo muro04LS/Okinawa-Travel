@@ -895,8 +895,14 @@ function demGrid(){var A="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01
 TERRAIN.forEach(function(row,j){var i=0,k=0;while(k<row.length&&i<DEM.w){var ch=row.charAt(k++);if(ch=="."){i+=A.indexOf(row.charAt(k++))+1}else{var v=A.indexOf(ch)+1;if(v>0){G[j*DEM.w+i]=v;sum+=v}i++}}});
 if(sum!==DEM.sum){var n=document.querySelector(".m3note");if(n)n.insertAdjacentHTML("beforeend","<br>※地形データの一部が壊れています（表示は続けます）")}
 return Promise.resolve(G)}
-function mount3d(THREE,G,el,days){
-var EX=5,KX=(DEM.lon1-DEM.lon0)*111.32*Math.cos(26.48*Math.PI/180),M0=merc(DEM.lat1),M1=merc(DEM.lat0),KZ=KX*(M0-M1)/((DEM.lon1-DEM.lon0)*Math.PI/180);
+function photo(){var n=1024*256,X=function(lon){return(lon+180)/360*n},Y=function(lat){return(1-merc(lat)/Math.PI)/2*n};var x0=X(DEM.lon0),x1=X(DEM.lon1),y0=Y(DEM.lat1),y1=Y(DEM.lat0),W=Math.round(x1-x0),H=Math.round(y1-y0),cv=document.createElement("canvas");cv.width=W;cv.height=H;var cx=cv.getContext("2d"),jobs=[];
+for(var tx=Math.floor(x0/256);tx<=Math.floor(x1/256);tx++)for(var ty=Math.floor(y0/256);ty<=Math.floor(y1/256);ty++)(function(tx,ty){jobs.push(new Promise(function(ok){var im=new Image;im.crossOrigin="anonymous";im.onload=function(){cx.drawImage(im,Math.round(tx*256-x0),Math.round(ty*256-y0));ok(1)};im.onerror=function(){ok(0)};im.src="https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/10/"+tx+"/"+ty+".jpg"}))})(tx,ty);
+return Promise.all(jobs).then(function(r){if(r.indexOf(1)<0)return null;
+var e=cx.getImageData(0,0,W,2).data,S=[0,0,0],K=e.length/4;for(var i=0;i<e.length;i+=4){S[0]+=e[i];S[1]+=e[i+1];S[2]+=e[i+2]}var c=S.map(function(v){return Math.round(v/K)}).join(","),f=Math.round(Math.min(W,H)*.08);
+[[0,0,f,0,0,0,f,H],[W,0,W-f,0,W-f,0,f,H],[0,0,0,f,0,0,W,f],[0,H,0,H-f,0,H-f,W,f]].forEach(function(g){var gr=cx.createLinearGradient(g[0],g[1],g[2],g[3]);gr.addColorStop(0,"rgba("+c+",1)");gr.addColorStop(1,"rgba("+c+",0)");cx.fillStyle=gr;cx.fillRect(g[4],g[5],g[6],g[7])});
+return{cv:cv,sea:"rgb("+c+")"}}).catch(function(){return null})}
+function mount3d(THREE,G,el,days,PH){
+var EX=3,KX=(DEM.lon1-DEM.lon0)*111.32*Math.cos(26.48*Math.PI/180),M0=merc(DEM.lat1),M1=merc(DEM.lat0),KZ=KX*(M0-M1)/((DEM.lon1-DEM.lon0)*Math.PI/180);
 function cell(lat,lon){return[(lon-DEM.lon0)/(DEM.lon1-DEM.lon0)*(DEM.w-1),(M0-merc(lat))/(M0-M1)*(DEM.h-1)]}
 function hAt(fi,fj){var i=Math.max(0,Math.min(DEM.w-2,Math.floor(fi))),j=Math.max(0,Math.min(DEM.h-2,Math.floor(fj))),u=fi-i,v=fj-j,g=function(a,b){return G[b*DEM.w+a]*DEM.u/1000*EX};return(g(i,j)*(1-u)+g(i+1,j)*u)*(1-v)+(g(i,j+1)*(1-u)+g(i+1,j+1)*u)*v}
 function pos(lat,lon,lift){var c=cell(lat,lon);return new THREE.Vector3(c[0]/(DEM.w-1)*KX-KX/2,hAt(c[0],c[1])+(lift||0),c[1]/(DEM.h-1)*KZ-KZ/2)}
@@ -905,11 +911,11 @@ function colorFor(v,out){if(!v)return out.setRGB(.20,.52,.76);var m=v*DEM.u;for(
 var RM=matchMedia("(prefers-reduced-motion: reduce)").matches,renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));el.appendChild(renderer.domElement);
 var scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(38,1,.5,600);
-scene.add(new THREE.HemisphereLight(0xffffff,0x6a7a90,1.6));var sun=new THREE.DirectionalLight(0xffffff,1.9);sun.position.set(-40,60,30);scene.add(sun);
+scene.add(new THREE.HemisphereLight(0xffffff,0x6a7a90,PH?2.6:1.6));var sun=new THREE.DirectionalLight(0xffffff,PH?2.2:1.9);sun.position.set(-40,60,30);scene.add(sun);
 var geo=new THREE.PlaneGeometry(KX,KZ,DEM.w-1,DEM.h-1);geo.rotateX(-Math.PI/2);
 var P=geo.attributes.position,col=new Float32Array(P.count*3),c=new THREE.Color();
 for(var k=0;k<P.count;k++){var v=G[k];P.setY(k,v?Math.max(.04,v*DEM.u/1000*EX):-.02);colorFor(v,c);col[k*3]=c.r;col[k*3+1]=c.g;col[k*3+2]=c.b}
-geo.setAttribute("color",new THREE.BufferAttribute(col,3));geo.computeVertexNormals();scene.add(new THREE.Mesh(geo,new THREE.MeshLambertMaterial({vertexColors:true})));
+geo.setAttribute("color",new THREE.BufferAttribute(col,3));geo.computeVertexNormals();var mat=new THREE.MeshLambertMaterial({vertexColors:true});if(PH){var tex=new THREE.CanvasTexture(PH.cv);tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=renderer.capabilities.getMaxAnisotropy();mat=new THREE.MeshLambertMaterial({map:tex})}scene.add(new THREE.Mesh(geo,mat)); var sea=new THREE.Mesh(new THREE.PlaneGeometry(900,900),new THREE.MeshLambertMaterial({color:PH?PH.sea:0x3385c2}));sea.rotateX(-Math.PI/2);sea.position.y=-.06;scene.add(sea);scene.fog=new THREE.Fog(0xdbeeff,160,420);
 var groups=days.map(function(d){
 var g=new THREE.Group(),color=new THREE.Color(d.c),pins=[],pts=d.stops.map(function(s){return pos(s[1],s[2],.05)});
 for(var k=0;k+1<pts.length;k++){var a=pts[k],b=pts[k+1],dist=a.distanceTo(b);if(dist<.01)continue;var mid=a.clone().add(b).multiplyScalar(.5);mid.y+=Math.max(.8,dist*.22);
@@ -952,11 +958,11 @@ var PL={"那覇空港":[26.2105,127.6493],"宜野湾マリンパーク":[26.2684
 var ROUTE=[["那覇空港","宜野湾マリンパーク","海中道路","Feliz Villa"],["Feliz Villa","本部港","美ら海水族館","今帰仁城跡","Feliz Villa"],["Feliz Villa","瀬底ビーチ","那覇ホテル","国際通り"],["那覇ホテル","首里城","牧志公設市場","那覇空港"]];
 var D3=days.map(function(d,i){return{t:"Day "+(i+1),c:d.c,stops:ROUTE[i].map(function(n){return[n,PL[n][0],PL[n][1]]})}});
 var btn='<button type="button" data-d="-1" class="on">全体</button>'+D3.map(function(d,i){return'<button type="button" data-d="'+i+'"><i style="--c:'+d.c+'"></i>'+d.t+'</button>'}).join("");
-page('<div class="m3" id="m3"><div class="m3msg">3Dマップを読み込み中…</div></div><div class="m3days" id="m3days">'+btn+'</div><p class="m3note">1本指で回す・傾ける、2本指で拡大・移動、ピンをタップで場所の名前。ルートは行き先を直線で結んだもので、実際の道ではありません。高さは5倍に強調しています。開くときに通信が必要です（約0.2MB）。<br>地形：Terrain Tiles（SRTM・GMTED2010：USGS、ETOPO1：NOAA、Mapzen）をもとに作成</p>');
+page('<div class="m3" id="m3"><div class="m3msg">3Dマップを読み込み中…</div></div><div class="m3days" id="m3days">'+btn+'</div><p class="m3note">1本指で回す・傾ける、2本指で拡大・移動、ピンをタップで場所の名前。ルートは行き先を直線で結んだもので、実際の道ではありません。高さは3倍に強調しています。開くときに通信が必要です（約0.8MB）。<br>地形：Terrain Tiles（SRTM・GMTED2010：USGS、ETOPO1：NOAA、Mapzen）をもとに作成<br>写真：<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">国土地理院（地理院タイル）</a>。データソース：Landsat8画像（GSI,TSIC,GEO Grid/AIST）、Landsat8画像（courtesy of the U.S. Geological Survey）、海底地形（GEBCO）</p>');
 var box=document.getElementById("m3"),api=null,loading=false,cur=-1;
 box.addEventListener("touchstart",function(e){e.stopPropagation()},{passive:true});
 function load(){if(api||loading)return;loading=true;
-Promise.all([import(THREE_URL),demGrid()]).then(function(r){box.innerHTML="";api=mount3d(r[0],r[1],box,D3);api.onPick(function(n,d){island(d.t+"："+n)});api.show(cur)})
+Promise.all([import(THREE_URL),demGrid(),photo()]).then(function(r){box.innerHTML="";api=mount3d(r[0],r[1],box,D3,r[2]);api.onPick(function(n,d){island(d.t+"："+n)});api.show(cur)})
 .catch(function(){box.innerHTML='<div class="m3msg">3Dマップを読み込めませんでした。通信できる場所で開き直してください</div>';loading=false})}
 document.getElementById("m3days").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;cur=+b.dataset.d;[].forEach.call(this.children,function(x){x.classList.toggle("on",x===b)});if(api)api.show(cur)});
 var g3=go;go=function(i,j){g3(i,j);if(i===4){load();if(api)api.resume()}else if(api)api.pause()};
