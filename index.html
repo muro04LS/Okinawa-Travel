@@ -932,7 +932,7 @@ function fit(idx){var tall=el.clientWidth<el.clientHeight;if(idx<0){Object.assig
 function place(){var s=Math.sin(rig.ph);camera.position.set(rig.tx+rig.r*s*Math.sin(rig.th),rig.r*Math.cos(rig.ph),rig.tz+rig.r*s*Math.cos(rig.th));camera.lookAt(rig.tx,0,rig.tz)}
 function labels(){var h="";groups.forEach(function(x,gi){if(active>=0&&gi!==active)return;x.pins.forEach(function(p){var v=p.at.clone();v.y+=.9*PS;v.project(camera);if(v.z>1)return;var X=(v.x+1)/2*el.clientWidth,Y=(1-v.y)/2*el.clientHeight;if(X<-40||X>el.clientWidth+40||Y<-20||Y>el.clientHeight+20)return;var t=active<0?x.d.t.replace("Day ",""):p.nums.join("・");h+='<span style="left:'+X.toFixed(0)+'px;top:'+Y.toFixed(0)+'px;--c:'+x.d.c+'">'+(active<0?t:t+". "+p.name.replace(/[<>&]/g,""))+'</span>'})});lay.innerHTML=h}
 function frame(){raf=0;if(anim<1){anim=Math.min(1,anim+1/36);var e=1-Math.pow(1-anim,3);["tx","tz","r","ph"].forEach(function(k){rig[k]+=(goal[k]-rig[k])*e});need=true}
-if(need){sizeLv();place();renderer.render(scene,camera);labels();need=false;wantDetail()}
+if(need){sizeLv();place();renderer.render(scene,camera);labels();comp();need=false;wantDetail()}
 if(anim<1&&visible)raf=requestAnimationFrame(frame)}
 function kick(){need=true;if(!raf&&visible)raf=requestAnimationFrame(frame)}
 function size(){var w=el.clientWidth,h=el.clientHeight;if(!w||!h)return;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();kick()}
@@ -951,7 +951,7 @@ cv.addEventListener("dblclick",function(){fit(active)});
 var ray=new THREE.Raycaster(),ndc=new THREE.Vector2();
 function pick(e){var r=cv.getBoundingClientRect();ndc.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(ndc,camera);
 var heads=[];groups.forEach(function(x,gi){if(active<0||gi===active)x.pins.forEach(function(p){heads.push(p.head)})});
-var hit=ray.intersectObjects(heads,false)[0];if(hit){if(onPick)onPick(hit.object.userData.name,hit.object.userData.day);return}var tm=scene.children.filter(function(o){return o.geometry===geo})[0],th=tm&&ray.intersectObject(tm,false)[0];if(th){var mm=Math.round(th.point.y/EX*100)*10;island(mm>0?"標高約"+mm+"m":"海")}}
+var hit=null,bd=1296,rx=e.clientX-r.left,ry=e.clientY-r.top;heads.forEach(function(h){var p=h.getWorldPosition(new THREE.Vector3());[0,.9*PS].forEach(function(up){var v=p.clone();v.y+=up;v.project(camera);if(v.z>1)return;var dx=(v.x+1)/2*r.width-rx,dy=(1-v.y)/2*r.height-ry,dd=dx*dx+dy*dy;if(dd<bd){bd=dd;hit={object:h}}})});if(hit){if(onPick)onPick(hit.object.userData.name,hit.object.userData.day,e);return}var tm=scene.children.filter(function(o){return o.geometry===geo})[0],th=tm&&ray.intersectObject(tm,false)[0];if(th){var mm=Math.round(th.point.y/EX*100)*10;island(mm>0?"標高約"+mm+"m":"海")}}
 function show(idx){active=idx;groups.forEach(function(x,gi){x.g.visible=idx<0||gi===idx});fit(idx)}
 var DT=null,dtT=0,dtKey="";
 function inv(x,z){var m=M0-(z+KZ/2)/KZ*(M0-M1);return[Math.atan(Math.sinh(m))*180/Math.PI,DEM.lon0+(x+KX/2)/KX*(DEM.lon1-DEM.lon0)]} function wantDetail(){clearTimeout(dtT);dtT=setTimeout(detail,300)} function detail(){if(!PH||!visible)return;if(rig.r>=40){if(DT&&DT.mesh.visible){DT.mesh.visible=false;kick()}return} var Z=rig.r<16?15:14,T=8,N=Math.pow(2,Z)*256,ll=inv(rig.tx,rig.tz),gx=(ll[1]+180)/360*N/256,gy=(1-merc(ll[0])/Math.PI)/2*N/256; if(DT&&DT.Z===Z&&Math.abs(gx-DT.tx0-T/2)<1.5&&Math.abs(gy-DT.ty0-T/2)<1.5){if(!DT.mesh.visible){DT.mesh.visible=true;kick()}return} var tx0=Math.round(gx-T/2),ty0=Math.round(gy-T/2),key=Z+"/"+tx0+"/"+ty0;if(dtKey===key)return;dtKey=key;
@@ -972,6 +972,9 @@ groups.forEach(function(x){x.tubes=x.g.children.filter(function(o){return o.geom
 function sizeLv(){var lv=rig.r<25?2:rig.r<60?1:0;if(lv===LV)return;LV=lv;var s=[1,.5,.22][lv],rad=[.26,.13,.06][lv];PS=s;
 groups.forEach(function(x){x.tubes.forEach(function(t){var old=t.geometry;t.geometry=new THREE.TubeGeometry(old.parameters.path,40,rad,6,false);old.dispose()});
 x.pins.forEach(function(p){p.head.scale.setScalar(s);p.head.position.y=p.y0+1.4*s;p.stick.scale.set(s,s,s);p.stick.position.y=p.y0+.7*s})})}
+var cp=document.createElement("button");cp.type="button";cp.className="m3cp";cp.setAttribute("aria-label","元の向きに戻す");cp.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l4.2 9.5H7.8z" fill="#ff453a"/><path d="M12 21.5L7.8 12h8.4z" fill="#fff" stroke="#8e8e93" stroke-width=".8"/></svg>';
+el.appendChild(cp);cp.addEventListener("pointerdown",function(e){e.stopPropagation()});cp.onclick=function(){rig.th=-.62;goal.th=-.62;fit(active)};
+function comp(){cp.style.transform="rotate("+rig.th.toFixed(3)+"rad)"}
 show(-1);Object.assign(rig,goal);anim=1;kick();
 return{show:show,pause:function(){visible=false;if(raf){cancelAnimationFrame(raf);raf=0}},resume:function(){visible=true;size();kick()},onPick:function(f){onPick=f}}}
 var PL={"那覇空港":[26.2105,127.6493],"宜野湾マリンパーク":[26.2684,127.7282],"海中道路":[26.3317,127.9292],"Feliz Villa":[26.6694,128.0151],"本部港":[26.6407,127.8796],"美ら海水族館":[26.6938,127.8784],"今帰仁城跡":[26.6880,127.9271],"瀬底ビーチ":[26.6506,127.8647],"那覇ホテル":[26.2208,127.7106],"国際通り":[26.2152,127.6898],"首里城":[26.2178,127.7149],"牧志公設市場":[26.2145,127.6883]};
@@ -982,9 +985,33 @@ page('<div class="m3" id="m3"><div class="m3msg">3Dマップを読み込み中�
 var box=document.getElementById("m3"),api=null,loading=false,cur=-1;
 box.addEventListener("touchstart",function(e){e.stopPropagation()},{passive:true});
 function load(){if(api||loading)return;loading=true;
-Promise.all([import(THREE_URL),demGrid(),photo()]).then(function(r){box.innerHTML="";api=mount3d(r[0],r[1],box,D3,r[2]);api.onPick(function(n,d){island(d.t+"："+n)});api.show(cur)})
+Promise.all([import(THREE_URL),demGrid(),photo()]).then(function(r){box.innerHTML="";api=mount3d(r[0],r[1],box,D3,r[2]);api.onPick(pinMenu);api.show(cur)})
 .catch(function(){box.innerHTML='<div class="m3msg">3Dマップを読み込めませんでした。通信できる場所で開き直してください</div>';loading=false})}
 document.getElementById("m3days").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;cur=+b.dataset.d;[].forEach.call(this.children,function(x){x.classList.toggle("on",x===b)});if(api)api.show(cur)});
+var DQ={"Feliz Villa":"Feliz Villa Suite 古宇利島ビュー","美ら海水族館":"沖縄美ら海水族館","那覇ホテル":"ダブルツリーbyヒルトン那覇首里城","首里城":"首里城公園","国際通り":"国際通り 那覇"};
+function pinMenu(n,d,e){var q=DQ[n]||n,di=D3.indexOf(d),a=document.createElement("a");a.className="gm";a.href="https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(q)+"&travelmode=driving";
+a.style.cssText="position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;left:"+e.clientX+"px;top:"+e.clientY+"px";document.body.appendChild(a);a.click();setTimeout(function(){a.remove()},0);
+var m=[].slice.call(document.querySelectorAll(".gmm")).pop();if(!m||di<0)return;var b=document.createElement("button");b.type="button";b.setAttribute("role","menuitem");b.innerHTML=ic("calendar-days")+'<span>'+d.t+'の日程を見る</span>';
+b.onclick=function(){m.remove();go(1,di);setTimeout(function(){var r=[].slice.call(pg[1+di].querySelectorAll("a.gm")).filter(function(x){return x.href.indexOf("destination="+encodeURIComponent(q)+"&")>0})[0];if(r)r.closest(".row").scrollIntoView({block:"center",behavior:"smooth"})},400)};m.appendChild(b)}
+var SAVE=document.createElement("button");SAVE.type="button";SAVE.className="m3save";SAVE.textContent="圏外でも見られるように、行き先のまわりの写真を保存";document.getElementById("m3days").insertAdjacentElement("afterend",SAVE);
+SAVE.onclick=function(){if(!("serviceWorker" in navigator)||!navigator.serviceWorker.controller){island("いまは保存できません。開き直してください",{icon:"del"});return}
+var U={},add=function(z,lat,lon,rad){var N=Math.pow(2,z),x=Math.floor((lon+180)/360*N),y=Math.floor((1-merc(lat)/Math.PI)/2*N);for(var i=-rad;i<=rad;i++)for(var j=-rad;j<=rad;j++)U["https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/"+z+"/"+(x+i)+"/"+(y+j)+".jpg"]=1};
+Object.keys(PL).forEach(function(k){add(14,PL[k][0],PL[k][1],2);add(15,PL[k][0],PL[k][1],1)});
+var list=Object.keys(U),all=list.length,done=0,ok=0,run=0;SAVE.disabled=true;
+function next(){if(!list.length){if(!run){SAVE.disabled=false;SAVE.textContent="保存しました（写真"+ok+"枚）";island("圏外でも見られるように保存しました")}return}run++;var u=list.shift();
+fetch(u,{mode:"cors"}).then(function(r){if(r.ok)ok++}).catch(function(){}).then(function(){run--;done++;SAVE.textContent="保存中… "+done+"/"+all;next()})}
+for(var k=0;k<6;k++)next()};
 var g3=go;go=function(i,j){g3(i,j);if(i===4){load();if(api)api.resume()}else if(api)api.pause()};
 })();
+</script>
+<style>
+/* ===== 3D map: compass + save button ===== */
+.m3cp{position:absolute;top:10px;right:10px;z-index:2;width:40px;height:40px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.88);box-shadow:0 2px 10px rgba(0,0,0,.2);cursor:pointer;transition:transform .15s linear}
+.m3cp svg{width:24px;height:24px}
+.m3save{display:block;width:100%;margin:8px 0 0;padding:10px 14px;border:0;border-radius:14px;background:rgba(115,80,230,.12);color:var(--tint);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.m3save:disabled{opacity:.7}
+</style>
+<script>
+/* ===== offline: register the service worker (sw.js) ===== */
+if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js").catch(function(){});
 </script></body></html>
