@@ -320,10 +320,7 @@ body::before{background:radial-gradient(30% 24% at 12% 10%,rgba(255,120,190,.9),
 #isl{left:0;right:0;margin:0 auto;transform:scale(.85);transform-origin:50% 0}
 #isl.on{transform:scale(1)}
 </style></head><body>
-<div id="op"><div class="sc"><div class="sky" id="sky"></div><div class="moon"></div><div class="cl l"></div><div class="cl r"></div><div class="glow"></div><div class="pl">✈️</div><div class="ss"></div><div class="bu" id="bu"></div>
-<svg class="palm a" id="pa" viewBox="0 0 80 160"></svg><svg class="palm b" id="pb" viewBox="0 0 80 160"></svg>
-<div class="cw"><div class="ci" id="ci"></div></div></div>
-<div class="tt"><span class="eb">ふたりの旅 ・ 2028 WINTER</span><span class="nm">沖縄 3泊4日</span><span class="dt">1月 〜 2月</span></div><button class="skip" id="sk">スキップ</button></div>
+<div id="oev"></div>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs id="fl"></defs></svg><div class="cover" id="cv"><div class="eyebrow">OKINAWA TRIP PLAN</div><div class="ctitle">沖縄 3泊4日<br>ふたり旅</div>
 <div class="meta"><span>🗓 2028年1〜2月</span><span>👫 2名</span><span>🚗 レンタカー</span><span>💴 30万円以内</span></div></div>
 <div id="scrim"></div>
@@ -338,7 +335,7 @@ body::before{background:radial-gradient(30% 24% at 12% 10%,rgba(255,120,190,.9),
 <div class="dnum"><b id="dn">0</b><u>%</u><small>準備の進捗<br><span id="dns"></span></small></div>
 <div class="dbar"><i id="dbi"></i></div>
 <div id="dlist"></div>
-<div class="dfoot"><button class="dl" id="opb"><span class="dic">✦</span><span class="t">オープニングを再生</span></button><p>沖縄 3泊4日 ふたり旅 ・ 2028年1〜2月</p></div>
+<div class="dfoot"><button class="dl" id="opb"><span class="dic">✦</span><span class="t">オープニングを再生</span></button><button class="dl" id="edb"><span class="dic">✦</span><span class="t">エンディングを再生</span></button><p>沖縄 3泊4日 ふたり旅 ・ 2028年1〜2月</p></div>
 </div></aside>
 <script>
 var days=[
@@ -380,22 +377,7 @@ dock.querySelectorAll("[data-g]").forEach(function(d){d.onclick=function(){var g
 document.getElementById("opb").onclick=function(){playOp()};go(0,0);
 
 for(var i=0;i<40;i++){var s=document.createElement("i");s.style.cssText="left:"+Math.random()*100+"%;top:"+Math.random()*100+"%;animation-delay:"+Math.random()*2+"s";document.getElementById("cv").appendChild(s)}
-var op=document.getElementById("op");
-(function(){var s="",i,c;for(i=0;i<60;i++)s+='<i style="left:'+Math.random()*100+'%;top:'+Math.random()*55+'%;animation-delay:'+Math.random()*2+'s"></i>';document.getElementById("sky").innerHTML=s;
-var pm='<path d="M40 160 Q34 100 44 50" stroke="#06102c" stroke-width="5" fill="none"/>';["M44 50 Q14 38 2 62","M44 50 Q20 22 6 30","M44 50 Q50 18 72 24","M44 50 Q70 38 78 62","M44 50 Q40 30 30 14"].forEach(function(d){pm+='<path d="'+d+'" stroke="#06102c" stroke-width="4" stroke-linecap="round" fill="none"/>'});
-document.getElementById("pa").innerHTML=pm;document.getElementById("pb").innerHTML=pm;
-var w="",k=0;function W(x,y,wd,h){w+='<rect class="win" style="animation-delay:'+(3.3+k++*.13).toFixed(2)+'s" x="'+x+'" y="'+y+'" width="'+wd+'" height="'+h+'" rx="2"/>'}
-[135,158,242,265].forEach(function(x){W(x,156,14,22)});W(188,158,24,38);[160,185,210].forEach(function(x){W(x,98,14,14)});
-var C='<svg viewBox="0 0 400 270"><path d="M0 232 Q100 200 200 208 Q300 200 400 232 V270 H0Z" fill="#162244"/><path d="M60 210H340V196H60Z" fill="#26345e"/><path d="M170 210H230L222 196H178Z" fill="#3a4a7a"/>'
-+'<rect x="40" y="165" width="50" height="31" fill="#8f3f2e"/><path d="M32 167H98L88 152H42Z" fill="#5a1f16"/><rect x="310" y="165" width="50" height="31" fill="#8f3f2e"/><path d="M302 167H368L358 152H312Z" fill="#5a1f16"/>'
-+'<rect x="115" y="140" width="170" height="56" fill="#b4573a"/><path d="M92 142Q200 126 308 142L286 118Q200 108 114 118Z" fill="#7a2e22"/><rect x="142" y="92" width="116" height="26" fill="#c4553a"/><path d="M122 94Q200 80 278 94L252 66Q200 58 148 66Z" fill="#6a2418"/>'
-+'<path d="M148 66Q200 58 252 66M114 118Q200 108 286 118" stroke="#ffe9a8" stroke-width="2.5" fill="none"/><circle cx="148" cy="63" r="3" fill="#e3c272"/><circle cx="252" cy="63" r="3" fill="#e3c272"/><path d="M178 142L200 120L222 142Z" fill="#e3c272" opacity=".9"/>'+w+'</svg>';
-document.getElementById("ci").innerHTML=C+'<div class="wv"></div><div class="rf">'+C.replace(/ class="win"/g,' class="win" style="opacity:.8"')+'</div>';
-var cs=["#ffe9a8","#5fd0e4","#ff9bb0"],bu="";for(i=0;i<18;i++){var an=i/18*6.283,r=60+Math.random()*50;bu+='<b style="background:'+cs[i%3]+';--x:'+Math.cos(an)*r+'px;--y:'+(Math.sin(an)*r+40)+'px"></b>'}document.getElementById("bu").innerHTML=bu})();
-var done=1;function cl(){if(done)return;done=1;op.classList.remove("on","playing");try{localStorage.setItem("op","1")}catch(e){}}
-function playOp(){done=0;op.classList.remove("playing");op.classList.add("on");void op.offsetWidth;op.classList.add("playing");clearTimeout(window.ot);window.ot=setTimeout(cl,10000)}
-document.getElementById("sk").onclick=cl;op.addEventListener("animationend",function(e){if(e.animationName=="ofade")cl()});
-var seen=0;try{seen=localStorage.getItem("op")}catch(e){}if(!seen)requestAnimationFrame(playOp);
+var op=document.getElementById("oev");
 
 var NS="http://www.w3.org/2000/svg",DF=document.getElementById("fl"),CH=/Chrome|Edg/.test(navigator.userAgent)&&!/CriOS|FxiOS|OPR/.test(navigator.userAgent),GN=0;
 function glass(el,o){if(!CH||!window.ResizeObserver)return;var id="lg"+(++GN),f=document.createElementNS(NS,"filter");f.id=id;f.setAttribute("color-interpolation-filters","sRGB");f.setAttribute("x","0");f.setAttribute("y","0");f.setAttribute("width","100%");f.setAttribute("height","100%");
@@ -523,7 +505,7 @@ mnb.onclick=function(){isOpen?closeD():openD(true)};
 dsc.onclick=closeD;
 addEventListener("keydown",function(e){if(e.key=="Escape"&&isOpen)closeD()});
 dw.addEventListener("click",function(e){var b=e.target.closest("[data-go]");if(!b)return;var a=b.dataset.go.split(",");go(+a[0],+a[1]);closeD()});
-$("opb").onclick=function(){closeD();setTimeout(function(){playOp()},380)};
+$("opb").onclick=function(){closeD();setTimeout(function(){playOp()},380)};$("edb").onclick=function(){closeD();setTimeout(function(){playEnd()},380)};
 addEventListener("resize",function(){size();render()});
 size();render()})();
 </script>
@@ -665,7 +647,7 @@ tb.addEventListener("click",function(e){if(supp){e.stopPropagation();e.preventDe
 <script>
 /* ===== trip mode（いま／次）===== */
 (function(){
-var TRIP_START=null; /* 旅行の初日を"2028-01-24"のように入れると、その日から自動で動く */
+var TRIP_START=window.TRIP_START=null; /* 旅行の初日を"2028-01-24"のように入れると、その日から自動で動く */
 var TM={"午前":540,"昼前":660,"昼":720,"午後":840,"夕方":1020,"夜":1140};
 var NAV='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>';
 function items(i){var rows=[].slice.call(pg[1+i].querySelectorAll(".card:not(.alt) .row:not(.move)")),prev=-1;return rows.map(function(r){var t=(r.querySelector(".time")||{}).textContent||"",m=TM[t]==null?prev+30:TM[t];if(m<=prev)m=prev+30;prev=m;return{row:r,min:m,name:r.querySelector(".name").textContent.replace(/[\u{1F300}-\u{1FAFF}\u2600-\u27BF]\uFE0F?/gu,"").trim()}})}
@@ -1014,4 +996,4 @@ var g3=go;go=function(i,j){g3(i,j);if(i===4){load();if(api)api.resume()}else if(
 <script>
 /* ===== offline: register the service worker (sw.js) ===== */
 if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js").catch(function(){});
-</script></body></html>
+</script><link rel="stylesheet" href="op.css"><script src="op.js"></script></body></html>
