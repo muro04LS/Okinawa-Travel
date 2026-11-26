@@ -636,7 +636,7 @@ function near(cx){var best=0,d=1e9;list().forEach(function(t,i){var dd=Math.abs(
 tb.addEventListener("pointerdown",function(e){if(e.button>0)return;drag={x0:e.clientX,lx:e.clientX,lt:e.timeStamp,v:0,moved:false,id:e.pointerId,off:tb.getBoundingClientRect().left,w:L.offsetWidth};L.classList.add("press")});
 tb.addEventListener("pointermove",function(e){if(!drag)return;if(!drag.moved){if(Math.abs(e.clientX-drag.x0)<6)return;drag.moved=true;try{tb.setPointerCapture(drag.id)}catch(_){}L.style.transition="transform .15s ease-out,background .2s"}
 var dt=Math.max(1,e.timeStamp-drag.lt);drag.v=drag.v*.6+(e.clientX-drag.lx)/dt*.4;drag.lx=e.clientX;drag.lt=e.timeStamp;
-var b=list(),mn=b[0].offsetLeft,mx=b[b.length-1].offsetLeft+b[b.length-1].offsetWidth-drag.w,x=e.clientX-drag.off-drag.w/2;if(x<mn)x=mn-(mn-x)*.25;if(x>mx)x=mx+(x-mx)*.25;
+var b=list(),o=b.map(function(t){return t.offsetLeft}),mn=Math.min.apply(null,o),mx=Math.max.apply(null,o)+b[0].offsetWidth-drag.w,x=e.clientX-drag.off-drag.w/2;if(x<mn)x=mn-(mn-x)*.25;if(x>mx)x=mx+(x-mx)*.25;
 var s=Math.min(.16,Math.abs(drag.v)*.25);L.style.left=x.toFixed(1)+"px";L.style.transform="scale("+(1.12+s).toFixed(3)+","+(1.12-s*.6).toFixed(3)+")";
 var i=near(x+drag.w/2);b.forEach(function(t,k){t.classList.toggle("hov",k==i)})});
 function end(){if(!drag)return;var d=drag;drag=null;L.classList.remove("press");list().forEach(function(t){t.classList.remove("hov")});if(!d.moved)return;
